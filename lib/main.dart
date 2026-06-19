@@ -1,126 +1,105 @@
 import 'package:flutter/material.dart';
-import 'models/sinhvien.dart';
+import 'models/data_store.dart';
+import 'widgets/quanly_nhanvien.dart';
+import 'widgets/quanly_chucvu.dart';
+import 'widgets/gan_chucvu.dart';
+import 'widgets/caidat_giaodien.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(const HRManagementApp());
+}
 
-class MyApp extends StatelessWidget {
+class HRManagementApp extends StatelessWidget {
+  const HRManagementApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Quan ly sinh vien",
-      home: MyHomePage(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: DataStore.themeNotifier,
+      builder: (_, ThemeMode modeHienTai, __) {
+        return MaterialApp(
+          title: 'Quản Lý Nhân Sự Giữa Kỳ',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            brightness: Brightness.light,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            useMaterial3: true,
+          ),
+          themeMode: modeHienTai,
+          home: const ManHinhChinh(),
+        );
+      },
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  final List<SinhVien> danhSachSinhVien = [
-    SinhVien(
-      ma: 2012332,
-      hoVaTen: "Nguyen Van Cuong",
-      ngaySinh: DateTime(2004, 8, 20),
-      diemTotNghiep: 8.2,
-    ),
-    SinhVien(
-      ma: 2022332,
-      hoVaTen: "Nguyen Tuan Anh",
-      ngaySinh: DateTime(2003, 12, 7),
-      diemTotNghiep: 7.9,
-    ),
-  ];
-
-  final maController = TextEditingController();
-  final hoVaTenController = TextEditingController();
-  final diemTotNghiepController = TextEditingController();
+class ManHinhChinh extends StatelessWidget {
+  const ManHinhChinh({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Quan ly sinh vien"),
+        title: const Text('Hệ Thống Quản Lý Nhân Sự'),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Ma sinh vien',
-                  ),
-                  controller: maController,
-                ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Ho va ten',
-                  ),
-                  controller: hoVaTenController,
-                ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Diem tot nghiep',
-                  ),
-                  controller: diemTotNghiepController,
-                ),
-                TextButton(
-                  child: Text('Them sinh vien'),
-                  onPressed: () {},
-                ),
-              ],
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(Icons.corporate_fare, size: 80, color: Colors.blue),
+            const SizedBox(height: 12),
+            const Text(
+              'DANH MỤC QUẢN TRỊ VIÊN',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1),
             ),
-          ),
-          Column(
-            children: danhSachSinhVien.map((sv) {
-              return Card(
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      margin: EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 15,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.purple,
-                          width: 2,
-                        ),
-                      ),
-                      padding: EdgeInsets.all(10),
-                      child: Text(
-                        sv.diemTotNghiep.toString(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.purple,
-                        ),
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sv.ma.toString() + ' - ' + sv.hoVaTen,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          sv.ngaySinh.toString(),
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+            const SizedBox(height: 30),
+            _nutMenuGiaoDien(context, Icons.people, 'Quản Lý Nhân Viên',
+                const QuanLyNhanVien()),
+            _nutMenuGiaoDien(
+                context, Icons.badge, 'Quản Lý Chức Vụ', const QuanLyChucVu()),
+            _nutMenuGiaoDien(context, Icons.assignment,
+                'Gán Chức Vụ Thành Viên', const GanChucVuWidget()),
+            _nutMenuGiaoDien(context, Icons.settings, 'Cài Đặt Hệ Thống',
+                const CaidatGiaodien()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _nutMenuGiaoDien(
+      BuildContext context, IconData icon, String tieuDe, Widget manHinhDich) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          alignment: Alignment.centerLeft,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => manHinhDich));
+        },
+        icon: Padding(
+          padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+          child: Icon(icon, size: 26),
+        ),
+        label: Text(tieuDe,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
     );
   }
