@@ -18,22 +18,16 @@ class HRManagementApp extends StatelessWidget {
       valueListenable: DataStore.themeNotifier,
       builder: (_, ThemeMode modeHienTai, __) {
         return MaterialApp(
-          title: 'Quản Lý Nhân Sự Pro',
+          title: 'HR Manager Pro',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             primarySwatch: Colors.indigo,
-            scaffoldBackgroundColor: Colors.grey[50], // Nền xám nhạt sang trọng
-            appBarTheme: const AppBarTheme(
-              elevation: 0,
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
-              centerTitle: true,
-            ),
+            scaffoldBackgroundColor: Colors.grey[100],
+            fontFamily: 'Roboto',
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             scaffoldBackgroundColor: const Color(0xFF121212),
-            appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
           ),
           themeMode: modeHienTai,
           home: const ManHinhChinh(),
@@ -51,152 +45,273 @@ class ManHinhChinh extends StatefulWidget {
 }
 
 class _ManHinhChinhState extends State<ManHinhChinh> {
+  // Hàm làm mới trang chủ khi từ trang khác quay về
   void _chuyenTrang(Widget trangDich) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => trangDich));
-    setState(() {}); // Tải lại số liệu Dashboard
+    setState(() {}); // Tải lại biểu đồ và dữ liệu
+  }
+
+  // Hàm lấy ngày hiện tại (không dùng thư viện ngoài)
+  String _ngayHienTai() {
+    DateTime now = DateTime.now();
+    return 'Ngày ${now.day} tháng ${now.month}, ${now.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    // Các biến tính toán dữ liệu thống kê
     int tongNV = DataStore.danhSachNhanVien.length;
     int tongCV = DataStore.danhSachChucVu.length;
+    int nvDaPhanCong =
+        DataStore.danhSachNhanVien.where((nv) => nv.maChucVu != null).length;
+    double tiLePhanCong = tongNV == 0 ? 0 : nvDaPhanCong / tongNV;
+
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workspace Nhân Sự',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('TỔNG QUAN',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                    letterSpacing: 1.5)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                    child: _taoTheThongKe('Nhân Viên', tongNV.toString(),
-                        Icons.people_alt_rounded, Colors.blue)),
-                const SizedBox(width: 16),
-                Expanded(
-                    child: _taoTheThongKe('Chức Vụ', tongCV.toString(),
-                        Icons.badge_rounded, Colors.orange)),
-              ],
+            // --- 1. HEADER CONG XỊN XÒ ---
+            Container(
+              padding: const EdgeInsets.only(
+                  top: 60, left: 24, right: 24, bottom: 30),
+              decoration: const BoxDecoration(
+                color: Colors.indigo,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_ngayHienTai(),
+                          style: TextStyle(
+                              color: Colors.indigo.shade100, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Xin chào, Admin! 👋',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.admin_panel_settings,
+                        color: Colors.indigo.shade400, size: 30),
+                  )
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
-            const Text('QUẢN TRỊ HỆ THỐNG',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                    letterSpacing: 1.5)),
-            const SizedBox(height: 12),
-            _nutMenuGiaoDien(
-                Icons.group_rounded,
-                Colors.indigo,
-                'Quản Lý Nhân Viên',
-                'Thêm, sửa, xóa hồ sơ nhân sự',
-                const QuanLyNhanVien()),
-            _nutMenuGiaoDien(
-                Icons.assignment_ind_rounded,
-                Colors.teal,
-                'Quản Lý Chức Vụ',
-                'Thiết lập danh mục chức danh',
-                const QuanLyChucVu()),
-            _nutMenuGiaoDien(
-                Icons.handshake_rounded,
-                Colors.deepOrange,
-                'Phân Bổ Chức Vụ',
-                'Điều động & bổ nhiệm nhân sự',
-                const GanChucVuWidget()),
-            _nutMenuGiaoDien(
-                Icons.settings_rounded,
-                Colors.blueGrey,
-                'Cài Đặt Hệ Thống',
-                'Tùy chỉnh giao diện Sáng/Tối',
-                const CaidatGiaodien()),
+
+            // --- 2. BẢNG TIẾN ĐỘ PHÂN BỔ (PROGRESS CARD) ---
+            Transform.translate(
+              offset: const Offset(0, -20),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[800] : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8))
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Tiến độ phân bổ nhân sự',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('${(tiLePhanCong * 100).toInt()}%',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: tiLePhanCong,
+                        minHeight: 10,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.indigo),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '$nvDaPhanCong/$tongNV nhân viên đã có chức danh',
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    )
+                  ],
+                ),
+              ),
+            ),
+
+            // --- 3. MENU DẠNG LƯỚI (GRID VIEW) ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: const Text('BẢNG ĐIỀU KHIỂN',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      letterSpacing: 1.2)),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics:
+                    const NeverScrollableScrollPhysics(), // Tắt cuộn của Grid để dùng cuộn của trang
+                childAspectRatio: 1.1,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                children: [
+                  _taoOChucNang('Nhân Sự', '$tongNV người', Icons.people_alt,
+                      Colors.blue, const QuanLyNhanVien()),
+                  _taoOChucNang('Chức Vụ', '$tongCV chức danh', Icons.badge,
+                      Colors.orange, const QuanLyChucVu()),
+                  _taoOChucNang('Bổ Nhiệm', 'Phân công việc', Icons.handshake,
+                      Colors.green, const GanChucVuWidget()),
+                  _taoOChucNang('Hệ Thống', 'Cài đặt giao diện', Icons.settings,
+                      Colors.blueGrey, const CaidatGiaodien()),
+                ],
+              ),
+            ),
+
+            // --- 4. NHÂN VIÊN GẦN ĐÂY ---
+            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('THÊM GẦN ĐÂY',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                          letterSpacing: 1.2)),
+                  TextButton(
+                    onPressed: () => _chuyenTrang(const QuanLyNhanVien()),
+                    child: const Text('Xem tất cả'),
+                  )
+                ],
+              ),
+            ),
+
+            DataStore.danhSachNhanVien.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('Chưa có nhân viên nào.'))
+                : ListView.builder(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    // Lấy tối đa 3 nhân viên mới nhất ở cuối danh sách
+                    itemCount: DataStore.danhSachNhanVien.length > 3
+                        ? 3
+                        : DataStore.danhSachNhanVien.length,
+                    itemBuilder: (context, index) {
+                      // Đảo ngược list để lấy người mới nhất
+                      final nv =
+                          DataStore.danhSachNhanVien.reversed.toList()[index];
+                      return Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                                color: Colors.grey.withOpacity(0.2))),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.indigo.shade50,
+                            child: Text(nv.hoTen[0],
+                                style: const TextStyle(
+                                    color: Colors.indigo,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                          title: Text(nv.hoTen,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(nv.trinhDo),
+                          trailing: const Icon(Icons.arrow_forward_ios,
+                              size: 14, color: Colors.grey),
+                          onTap: () => _chuyenTrang(const QuanLyNhanVien()),
+                        ),
+                      );
+                    },
+                  ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _taoTheThongKe(
-      String tieuDe, String giaTri, IconData icon, Color mauSac) {
-    return Container(
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: mauSac.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(icon, size: 30, color: mauSac),
-          ),
-          const SizedBox(height: 16),
-          Text(giaTri,
-              style:
-                  const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(tieuDe,
-              style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
+  // Widget vẽ từng ô vuông của Menu
+  Widget _taoOChucNang(String tieuDe, String moTa, IconData icon, Color mauSac,
+      Widget trangDich) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-  Widget _nutMenuGiaoDien(IconData icon, Color iconColor, String tieuDe,
-      String moTa, Widget manHinhDich) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        leading: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: iconColor),
+    return InkWell(
+      onTap: () => _chuyenTrang(trangDich),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ],
         ),
-        title: Text(tieuDe,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(moTa, style: const TextStyle(fontSize: 13)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: mauSac.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: mauSac, size: 28),
+            ),
+            const Spacer(),
+            Text(tieuDe,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(moTa,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ],
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-        onTap: () => _chuyenTrang(manHinhDich),
       ),
     );
   }
