@@ -45,13 +45,11 @@ class ManHinhChinh extends StatefulWidget {
 }
 
 class _ManHinhChinhState extends State<ManHinhChinh> {
-  // Hàm làm mới trang chủ khi từ trang khác quay về
   void _chuyenTrang(Widget trangDich) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => trangDich));
-    setState(() {}); // Tải lại biểu đồ và dữ liệu
+    setState(() {});
   }
 
-  // Hàm lấy ngày hiện tại (không dùng thư viện ngoài)
   String _ngayHienTai() {
     DateTime now = DateTime.now();
     return 'Ngày ${now.day} tháng ${now.month}, ${now.year}';
@@ -59,7 +57,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
 
   @override
   Widget build(BuildContext context) {
-    // Các biến tính toán dữ liệu thống kê
     int tongNV = DataStore.danhSachNhanVien.length;
     int tongCV = DataStore.danhSachChucVu.length;
     int nvDaPhanCong =
@@ -73,7 +70,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. HEADER CONG XỊN XÒ ---
             Container(
               padding: const EdgeInsets.only(
                   top: 60, left: 24, right: 24, bottom: 30),
@@ -112,8 +108,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
                 ],
               ),
             ),
-
-            // --- 2. BẢNG TIẾN ĐỘ PHÂN BỔ (PROGRESS CARD) ---
             Transform.translate(
               offset: const Offset(0, -20),
               child: Container(
@@ -164,8 +158,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
                 ),
               ),
             ),
-
-            // --- 3. MENU DẠNG LƯỚI (GRID VIEW) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: const Text('BẢNG ĐIỀU KHIỂN',
@@ -198,8 +190,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
                 ],
               ),
             ),
-
-            // --- 4. NHÂN VIÊN GẦN ĐÂY ---
             const SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -219,7 +209,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
                 ],
               ),
             ),
-
             DataStore.danhSachNhanVien.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(24),
@@ -229,12 +218,10 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    // Lấy tối đa 3 nhân viên mới nhất ở cuối danh sách
                     itemCount: DataStore.danhSachNhanVien.length > 3
                         ? 3
                         : DataStore.danhSachNhanVien.length,
                     itemBuilder: (context, index) {
-                      // Đảo ngược list để lấy người mới nhất
                       final nv =
                           DataStore.danhSachNhanVien.reversed.toList()[index];
                       return Card(
@@ -270,7 +257,6 @@ class _ManHinhChinhState extends State<ManHinhChinh> {
     );
   }
 
-  // Widget vẽ từng ô vuông của Menu
   Widget _taoOChucNang(String tieuDe, String moTa, IconData icon, Color mauSac,
       Widget trangDich) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;

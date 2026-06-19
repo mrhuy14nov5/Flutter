@@ -6,7 +6,7 @@ class DataStore {
   static List<NhanVien> danhSachNhanVien = [
     NhanVien(
         maNV: 'NV01',
-        hoTen: 'Nguyễn Văn A',
+        hoTen: 'Vương Huy Huy',
         namSinh: 1995,
         gioiTinh: 'Nam',
         trinhDo: 'Đại học',
@@ -14,7 +14,7 @@ class DataStore {
         maChucVu: 'CV01'),
     NhanVien(
       maNV: 'NV02',
-      hoTen: 'Trần Thị B',
+      hoTen: 'Đỗ Thị ABCD',
       namSinh: 1998,
       gioiTinh: 'Nữ',
       trinhDo: 'Cao đẳng',
