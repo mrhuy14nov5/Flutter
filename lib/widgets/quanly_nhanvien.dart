@@ -10,6 +10,9 @@ class QuanLyNhanVien extends StatefulWidget {
 }
 
 class _QuanLyNhanVienState extends State<QuanLyNhanVien> {
+  String tuKhoaTimKiem = '';
+  final _formKey = GlobalKey<FormState>();
+
   void _hienDialogNhanVien({NhanVien? nv}) {
     final isEdit = nv != null;
     final txtMaNV = TextEditingController(text: nv?.maNV ?? '');
@@ -24,64 +27,76 @@ class _QuanLyNhanVienState extends State<QuanLyNhanVien> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: Text(isEdit ? 'Cập Nhật Nhân Viên' : 'Thêm Nhân Viên Mới'),
+        title: Text(isEdit ? 'Cập Nhật NV' : 'Thêm NV Mới'),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: txtMaNV,
-                enabled: !isEdit,
-                decoration:
-                    const InputDecoration(labelText: 'Mã Nhân Viên (Mã NV)'),
-              ),
-              TextField(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: txtMaNV,
+                  enabled: !isEdit,
+                  decoration: const InputDecoration(labelText: 'Mã NV *'),
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Vui lòng nhập Mã NV' : null,
+                ),
+                TextFormField(
                   controller: txtHoTen,
-                  decoration: const InputDecoration(labelText: 'Họ và tên')),
-              TextField(
-                  controller: txtNamSinh,
-                  decoration: const InputDecoration(labelText: 'Năm sinh'),
-                  keyboardType: TextInputType.number),
-              TextField(
-                  controller: txtGioiTinh,
-                  decoration: const InputDecoration(labelText: 'Giới tính')),
-              TextField(
-                  controller: txtTrinhDo,
-                  decoration:
-                      const InputDecoration(labelText: 'Trình độ chuyên môn')),
-              TextField(
-                  controller: txtQueQuan,
-                  decoration: const InputDecoration(labelText: 'Quê quán')),
-            ],
+                  decoration: const InputDecoration(labelText: 'Họ và tên *'),
+                  validator: (val) => val == null || val.isEmpty
+                      ? 'Vui lòng nhập Họ tên'
+                      : null,
+                ),
+                TextFormField(
+                    controller: txtNamSinh,
+                    decoration: const InputDecoration(labelText: 'Năm sinh'),
+                    keyboardType: TextInputType.number),
+                TextFormField(
+                    controller: txtGioiTinh,
+                    decoration: const InputDecoration(labelText: 'Giới tính')),
+                TextFormField(
+                    controller: txtTrinhDo,
+                    decoration: const InputDecoration(labelText: 'Trình độ')),
+                TextFormField(
+                    controller: txtQueQuan,
+                    decoration: const InputDecoration(labelText: 'Quê quán')),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () {
-              if (txtMaNV.text.isEmpty || txtHoTen.text.isEmpty) return;
-              setState(() {
-                if (isEdit) {
-                  nv.hoTen = txtHoTen.text;
-                  nv.namSinh = int.tryParse(txtNamSinh.text) ?? 2000;
-                  nv.gioiTinh = txtGioiTinh.text;
-                  nv.trinhDo = txtTrinhDo.text;
-                  nv.queQuan = txtQueQuan.text;
-                } else {
-                  DataStore.danhSachNhanVien.add(NhanVien(
-                    maNV: txtMaNV.text,
-                    hoTen: txtHoTen.text,
-                    namSinh: int.tryParse(txtNamSinh.text) ?? 2000,
-                    gioiTinh: txtGioiTinh.text,
-                    trinhDo: txtTrinhDo.text,
-                    queQuan: txtQueQuan.text,
-                  ));
-                }
-              });
-              Navigator.pop(ctx);
+              if (_formKey.currentState!.validate()) {
+                setState(() {
+                  if (isEdit) {
+                    nv.hoTen = txtHoTen.text;
+                    nv.namSinh = int.tryParse(txtNamSinh.text) ?? 2000;
+                    nv.gioiTinh = txtGioiTinh.text;
+                    nv.trinhDo = txtTrinhDo.text;
+                    nv.queQuan = txtQueQuan.text;
+                  } else {
+                    DataStore.danhSachNhanVien.add(NhanVien(
+                      maNV: txtMaNV.text,
+                      hoTen: txtHoTen.text,
+                      namSinh: int.tryParse(txtNamSinh.text) ?? 2000,
+                      gioiTinh: txtGioiTinh.text,
+                      trinhDo: txtTrinhDo.text,
+                      queQuan: txtQueQuan.text,
+                    ));
+                  }
+                });
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Lưu thành công!'),
+                    backgroundColor: Colors.green));
+              }
             },
-            child: const Text('Lưu'),
+            child: const Text('Lưu Dữ Liệu'),
           ),
         ],
       ),
@@ -90,46 +105,117 @@ class _QuanLyNhanVienState extends State<QuanLyNhanVien> {
 
   @override
   Widget build(BuildContext context) {
+    // Lọc theo từ khóa
+    var danhSachLoc = DataStore.danhSachNhanVien.where((nv) {
+      return nv.hoTen.toLowerCase().contains(tuKhoaTimKiem.toLowerCase()) ||
+          nv.maNV.toLowerCase().contains(tuKhoaTimKiem.toLowerCase());
+    }).toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Danh Sách Nhân Viên')),
-      body: DataStore.danhSachNhanVien.isEmpty
-          ? const Center(child: Text('Danh sách nhân viên trống.'))
-          : ListView.builder(
-              itemCount: DataStore.danhSachNhanVien.length,
-              itemBuilder: (context, index) {
-                final nv = DataStore.danhSachNhanVien[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    title: Text('${nv.maNV} - ${nv.hoTen}',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(
-                        'NS: ${nv.namSinh} | GT: ${nv.gioiTinh}\nTĐ: ${nv.trinhDo} | Quê: ${nv.queQuan}'),
-                    isThreeLine: true,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _hienDialogNhanVien(nv: nv)),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              DataStore.danhSachNhanVien.removeAt(index);
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+      appBar: AppBar(title: const Text('Quản Lý Nhân Viên')),
+      body: Column(
+        children: [
+          // THANH TÌM KIẾM
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Tìm theo tên hoặc mã...',
+                prefixIcon: const Icon(Icons.search),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                filled: true,
+                // Dùng màu xám chuẩn thay vì màu của Material 3 để Flutlab không báo lỗi
+                fillColor: Colors.grey.shade200,
+              ),
+              onChanged: (giatri) {
+                setState(() {
+                  tuKhoaTimKiem = giatri;
+                });
               },
             ),
-      floatingActionButton: FloatingActionButton(
+          ),
+
+          // DANH SÁCH NHÂN VIÊN
+          Expanded(
+            child: danhSachLoc.isEmpty
+                ? const Center(child: Text('Không tìm thấy nhân viên nào.'))
+                : ListView.builder(
+                    itemCount: danhSachLoc.length,
+                    itemBuilder: (context, index) {
+                      final nv = danhSachLoc[index];
+                      // Vuốt để Xóa
+                      return Dismissible(
+                        key: Key(nv.maNV),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          color: Colors.red,
+                          child: const Icon(Icons.delete_sweep,
+                              color: Colors.white, size: 30),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Xác nhận xóa"),
+                                content: Text(
+                                    "Bạn có chắc muốn xóa [${nv.hoTen}] không?"),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text("Hủy")),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text("Xóa",
+                                        style: TextStyle(color: Colors.white)),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        onDismissed: (direction) {
+                          setState(() {
+                            DataStore.danhSachNhanVien
+                                .removeWhere((item) => item.maNV == nv.maNV);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Đã xóa ${nv.hoTen}')));
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                                child: Text(
+                                    nv.hoTen.isNotEmpty ? nv.hoTen[0] : '?')),
+                            title: Text('${nv.maNV} - ${nv.hoTen}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            subtitle: Text('NS: ${nv.namSinh} | ${nv.trinhDo}'),
+                            trailing: IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => _hienDialogNhanVien(nv: nv)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _hienDialogNhanVien(),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Thêm NV'),
       ),
     );
   }

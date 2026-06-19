@@ -3,7 +3,6 @@ import 'nhanvien.dart';
 import 'chucvu.dart';
 
 class DataStore {
-  // Đã xóa dấu ... gây lỗi cú pháp
   static List<NhanVien> danhSachNhanVien = [
     NhanVien(
         maNV: 'NV01',

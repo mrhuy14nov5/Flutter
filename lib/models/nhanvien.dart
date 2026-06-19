@@ -5,7 +5,7 @@ class NhanVien {
   String gioiTinh;
   String trinhDo;
   String queQuan;
-  String? maChucVu; // Có thể null nếu nhân viên đó chưa được gán chức vụ
+  String? maChucVu;
 
   NhanVien({
     required this.maNV,

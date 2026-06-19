@@ -18,16 +18,14 @@ class HRManagementApp extends StatelessWidget {
       valueListenable: DataStore.themeNotifier,
       builder: (_, ThemeMode modeHienTai, __) {
         return MaterialApp(
-          title: 'Quản Lý Nhân Sự Giữa Kỳ',
+          title: 'Quản Lý Nhân Sự VIP',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             primarySwatch: Colors.blue,
             brightness: Brightness.light,
-            useMaterial3: true,
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
-            useMaterial3: true,
           ),
           themeMode: modeHienTai,
           home: const ManHinhChinh(),
@@ -37,67 +35,114 @@ class HRManagementApp extends StatelessWidget {
   }
 }
 
-class ManHinhChinh extends StatelessWidget {
+class ManHinhChinh extends StatefulWidget {
   const ManHinhChinh({Key? key}) : super(key: key);
 
   @override
+  State<ManHinhChinh> createState() => _ManHinhChinhState();
+}
+
+class _ManHinhChinhState extends State<ManHinhChinh> {
+  void _chuyenTrang(Widget trangDich) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => trangDich));
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    int tongNV = DataStore.danhSachNhanVien.length;
+    int tongCV = DataStore.danhSachChucVu.length;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hệ Thống Quản Lý Nhân Sự'),
+        title: const Text('Hệ Thống Nhân Sự',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
-      body: Container(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.corporate_fare, size: 80, color: Colors.blue),
-            const SizedBox(height: 12),
-            const Text(
-              'DANH MỤC QUẢN TRỊ VIÊN',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1),
+            // --- DASHBOARD THỐNG KÊ ---
+            const Text('TỔNG QUAN HỆ THỐNG',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                    child: _taoTheThongKe('Nhân Viên', tongNV.toString(),
+                        Icons.people, Colors.blue)),
+                const SizedBox(width: 16),
+                Expanded(
+                    child: _taoTheThongKe('Chức Vụ', tongCV.toString(),
+                        Icons.badge, Colors.orange)),
+              ],
             ),
             const SizedBox(height: 30),
-            _nutMenuGiaoDien(context, Icons.people, 'Quản Lý Nhân Viên',
-                const QuanLyNhanVien()),
-            _nutMenuGiaoDien(
-                context, Icons.badge, 'Quản Lý Chức Vụ', const QuanLyChucVu()),
-            _nutMenuGiaoDien(context, Icons.assignment,
-                'Gán Chức Vụ Thành Viên', const GanChucVuWidget()),
-            _nutMenuGiaoDien(context, Icons.settings, 'Cài Đặt Hệ Thống',
-                const CaidatGiaodien()),
+            const Divider(),
+            const SizedBox(height: 10),
+
+            // --- MENU QUẢN TRỊ ---
+            const Text('CHỨC NĂNG QUẢN TRỊ',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey)),
+            const SizedBox(height: 10),
+            _nutMenu(Icons.group, 'Quản Lý Nhân Viên', const QuanLyNhanVien()),
+            _nutMenu(
+                Icons.assignment_ind, 'Quản Lý Chức Vụ', const QuanLyChucVu()),
+            _nutMenu(
+                Icons.handshake, 'Phân Bổ Chức Vụ', const GanChucVuWidget()),
+            _nutMenu(
+                Icons.settings, 'Cài Đặt Giao Diện', const CaidatGiaodien()),
           ],
         ),
       ),
     );
   }
 
-  Widget _nutMenuGiaoDien(
-      BuildContext context, IconData icon, String tieuDe, Widget manHinhDich) {
+  Widget _taoTheThongKe(
+      String tieuDe, String giaTri, IconData icon, Color mauSac) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Icon(icon, size: 40, color: mauSac),
+            const SizedBox(height: 8),
+            Text(giaTri,
+                style: TextStyle(
+                    fontSize: 28, fontWeight: FontWeight.bold, color: mauSac)),
+            Text(tieuDe,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _nutMenu(IconData icon, String tieuDe, Widget manHinhDich) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 18),
           alignment: Alignment.centerLeft,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (_) => manHinhDich));
-        },
+        onPressed: () => _chuyenTrang(manHinhDich),
         icon: Padding(
-          padding: const EdgeInsets.only(left: 12.0, right: 8.0),
-          child: Icon(icon, size: 26),
-        ),
+            padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+            child: Icon(icon, size: 26)),
         label: Text(tieuDe,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
